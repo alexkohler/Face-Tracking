@@ -63,13 +63,13 @@ namespace FaceTrackingBasics
         static List<float> sampleTwoDistances = new List<float>();
         static List<float> sampleThreeDistances = new List<float>();
         static List<float> sampleFourDistances = new List<float>();
-        static int[] sampleOneHistogram = new int[64];//64 bins
+        static int[] sampleOneHistogram = new int[65];//64 bins
         static float sampleOneMaxDistance = 0;
-        static int[] sampleTwoHistogram = new int[64];
+        static int[] sampleTwoHistogram = new int[65];
         static float sampleTwoMaxDistance = 0;
-        static int[] sampleThreeHistogram = new int[64];
+        static int[] sampleThreeHistogram = new int[65];
         static float sampleThreeMaxDistance = 0;
-        static int[] sampleFourHistogram = new int[64];
+        static int[] sampleFourHistogram = new int[65];
         static float sampleFourMaxDistance = 0;
         static ArrayList pointList = new ArrayList();
 
@@ -423,21 +423,34 @@ namespace FaceTrackingBasics
                             Console.WriteLine("We are ready to sample");
                             foreach (float distance in sampleOneDistances)
                             {
-                                sampleOneHistogram[(int) Math.Floor(distance / sampleOneMaxDistance)]++;
+                                sampleOneHistogram[(int) Math.Floor(64 * distance / sampleOneMaxDistance)]++;
                             }
-
                             foreach (float distance in sampleTwoDistances)
                             {
-                                sampleTwoHistogram[(int)Math.Floor(distance / sampleTwoMaxDistance)]++;
+                                sampleTwoHistogram[(int)Math.Floor(64 * distance / sampleTwoMaxDistance)]++;
                             }
+                            foreach (float distance in sampleThreeDistances)
+                            {
+                                sampleThreeHistogram[(int)Math.Floor(64 * distance / sampleThreeMaxDistance)]++;
+                            }
+                            foreach (float distance in sampleFourDistances)
+                            {
+                                sampleFourHistogram[(int)Math.Floor(64 * distance / sampleFourMaxDistance)]++;
+                            }                
+
+
+
                             Console.Write("Sample two size is " + sampleTwoDistances.Count);
                             Console.Write("Sample two max distance is " + sampleTwoMaxDistance);
                             int iter = 0;
+
                             foreach (int count in sampleTwoHistogram)
                             {
-                                Console.WriteLine("Count at " + iter + " is " + count);
+                                Console.WriteLine("S2Count at " + iter + " is " + count + "/" + sampleOneHistogram[iter] + "/" + sampleThreeHistogram[iter] + "/" + sampleFourHistogram);
                                 iter++;
                             }
+    
+
 
                             frameIter++; //only do this once (will make conditional evaluate to false
                         }
@@ -457,18 +470,16 @@ namespace FaceTrackingBasics
                                     float diffZ = (myPoints[i].Item3 - myPoints[j].Item3);
                                     float distance = (float)Math.Sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
                                     var csv = new StringBuilder();
-                                    if (frameIter == 0) //sample 1
+                                    if (frameIter == 1) //sample 1
                                     {
-                                        Debug.WriteLine("Added to sample 1");
                                         sampleOneDistances.Add(distance);
                                         if (distance > sampleOneMaxDistance)
                                             sampleOneMaxDistance = distance;
                                         //csv.Append(string.Format("{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
                                         //File.WriteAllText(filePath, csv.ToString
                                     }
-                                    else if (frameIter == 1)//sample 2
+                                    else if (frameIter == 2)//sample 2
                                     {
-                                        //Debug.WriteLine("Added to sample 2");
                                         sampleTwoDistances.Add(distance);
                                         if (distance > sampleTwoMaxDistance)
                                             sampleTwoMaxDistance = distance;
@@ -476,7 +487,7 @@ namespace FaceTrackingBasics
                                         //File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
       
                                     }
-                                    else if (frameIter == 2)//sample 3
+                                    else if (frameIter == 3)//sample 3
                                     {
                                         sampleThreeDistances.Add(distance);
                                         if (distance > sampleThreeMaxDistance)
@@ -485,7 +496,7 @@ namespace FaceTrackingBasics
                                        // File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
 
                                     }
-                                    else if (frameIter == 3) //sample 4
+                                    else if (frameIter == 4) //sample 4
                                     {
                                         if (distance > sampleFourMaxDistance)
                                             sampleFourMaxDistance = distance;
