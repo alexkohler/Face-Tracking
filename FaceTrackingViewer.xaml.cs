@@ -59,7 +59,18 @@ namespace FaceTrackingBasics
         static Stopwatch timer = new Stopwatch();//for sake of knowing how quick samples are taken
         static Boolean timerStarted = false;
         const String filePath = "F:\\cygwin\\home\\aok5326\\workspace\\FacialRecognition\\data.csv";
-
+        static List<float> sampleOneDistances = new List<float>();
+        static List<float> sampleTwoDistances = new List<float>();
+        static List<float> sampleThreeDistances = new List<float>();
+        static List<float> sampleFourDistances = new List<float>();
+        static int[] sampleOneHistogram = new int[64];//64 bins
+        static float sampleOneMaxDistance = 0;
+        static int[] sampleTwoHistogram = new int[64];
+        static float sampleTwoMaxDistance = 0;
+        static int[] sampleThreeHistogram = new int[64];
+        static float sampleThreeMaxDistance = 0;
+        static int[] sampleFourHistogram = new int[64];
+        static float sampleFourMaxDistance = 0;
         static ArrayList pointList = new ArrayList();
 
 
@@ -392,12 +403,8 @@ namespace FaceTrackingBasics
                             //Create a new thread so we don't make the visual thread throw up all over the place
                             new Thread(() =>
                             {
-                                Thread.CurrentThread.IsBackground = true;
-                                /* run your code here */
-
-
-
-                           
+                            Thread.CurrentThread.IsBackground = true;
+   
                             List<Tuple<float, float, float>> myPoints = new List<Tuple<float, float, float>>();
                             foreach (Vector3DF vector in facePoints3D)
                             {
@@ -405,8 +412,42 @@ namespace FaceTrackingBasics
                                 myPoints.Add(new Tuple<float, float, float>(vector.X, vector.Y, vector.Z));
                                 index++;
                             }
+                            calculateDistances(myPoints);
+                            frameIter++;
+                            }).Start();
+                            //once = true;
+                        }
 
-                            ///Iterate through points, calculate difference
+                        if (frameIter == 4)
+                        {
+                            Console.WriteLine("We are ready to sample");
+                            foreach (float distance in sampleOneDistances)
+                            {
+                                sampleOneHistogram[(int) Math.Floor(distance / sampleOneMaxDistance)]++;
+                            }
+
+                            foreach (float distance in sampleTwoDistances)
+                            {
+                                sampleTwoHistogram[(int)Math.Floor(distance / sampleTwoMaxDistance)]++;
+                            }
+                            Console.Write("Sample two size is " + sampleTwoDistances.Count);
+                            Console.Write("Sample two max distance is " + sampleTwoMaxDistance);
+                            int iter = 0;
+                            foreach (int count in sampleTwoHistogram)
+                            {
+                                Console.WriteLine("Count at " + iter + " is " + count);
+                                iter++;
+                            }
+
+                            frameIter++; //only do this once (will make conditional evaluate to false
+                        }
+                    }
+                }
+            }
+
+            void calculateDistances(List<Tuple<float, float, float>> myPoints)
+            {
+                                            ///Iterate through points, calculate difference
                             for (int i = 0; i < 121; i++) 
                             {
                                 for (int j = 1; j < 121; j++)//always running one ahead
@@ -414,46 +455,49 @@ namespace FaceTrackingBasics
                                     float diffX =  (myPoints[i].Item1 - myPoints[j].Item1);
                                     float diffY = (myPoints[i].Item2 - myPoints[j].Item2);
                                     float diffZ = (myPoints[i].Item3 - myPoints[j].Item3);
+                                    float distance = (float)Math.Sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
                                     var csv = new StringBuilder();
                                     if (frameIter == 0) //sample 1
                                     {
-                                        csv.Clear();
+                                        Debug.WriteLine("Added to sample 1");
+                                        sampleOneDistances.Add(distance);
+                                        if (distance > sampleOneMaxDistance)
+                                            sampleOneMaxDistance = distance;
                                         //csv.Append(string.Format("{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
                                         //File.WriteAllText(filePath, csv.ToString
-
                                     }
                                     else if (frameIter == 1)//sample 2
                                     {
-                                        csv.Clear();
+                                        //Debug.WriteLine("Added to sample 2");
+                                        sampleTwoDistances.Add(distance);
+                                        if (distance > sampleTwoMaxDistance)
+                                            sampleTwoMaxDistance = distance;
                                         //csv.Append(string.Format(",,,{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
                                         //File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
       
                                     }
                                     else if (frameIter == 2)//sample 3
                                     {
-                                        csv.Clear();
+                                        sampleThreeDistances.Add(distance);
+                                        if (distance > sampleThreeMaxDistance)
+                                            sampleThreeMaxDistance = distance;
                                         //csv.Append(string.Format(",,,,,,{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
                                        // File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
 
                                     }
                                     else if (frameIter == 3) //sample 4
                                     {
-
-                                        Debug.WriteLine("Sample 1");
+                                        if (distance > sampleFourMaxDistance)
+                                            sampleFourMaxDistance = distance;
+                                        sampleFourDistances.Add(distance);
                                     }
 
                                 }
                             }
 
-
-                            Debug.WriteLine("Written once");
-                            frameIter++;
-                            }).Start();
-                            //once = true;
-                        }
-                    }
-                }
             }
+
+
 
             private struct FaceModelTriangle
             {
