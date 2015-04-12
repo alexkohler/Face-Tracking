@@ -7,6 +7,11 @@
 namespace FaceTrackingBasics
 {
     using System;
+    using System.IO; //for TextWriter
+    using System.Text; //stringbuilder 
+    using System.Collections; //for arrayList
+   
+    using System.Threading;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Windows;
@@ -14,6 +19,7 @@ namespace FaceTrackingBasics
     using System.Windows.Media;
     using Microsoft.Kinect;
     using Microsoft.Kinect.Toolkit.FaceTracking;
+
 
     using Point = System.Windows.Point;
 
@@ -45,6 +51,17 @@ namespace FaceTrackingBasics
         private bool disposed;
 
         private Skeleton[] skeletonData;
+
+        //personal class variables
+        static int numberOfFrames = 0;
+        static int frameIter = 1;
+        static int sampleRate = 30; //50 - roughly every 1.5 seconds
+        static Stopwatch timer = new Stopwatch();//for sake of knowing how quick samples are taken
+        static Boolean timerStarted = false;
+        const String filePath = "F:\\cygwin\\home\\aok5326\\workspace\\FacialRecognition\\data.csv";
+
+        static ArrayList pointList = new ArrayList();
+
 
         public FaceTrackingViewer()
         {
@@ -307,8 +324,19 @@ namespace FaceTrackingBasics
             /// <summary>
             /// Updates the face tracking information for this skeleton
             /// </summary>
+            /// 
+            static Boolean once = false;
             internal void OnFrameReady(KinectSensor kinectSensor, ColorImageFormat colorImageFormat, byte[] colorImage, DepthImageFormat depthImageFormat, short[] depthImage, Skeleton skeletonOfInterest)
             {
+                if (!timerStarted)
+                {
+                    timer.Start();
+                    timerStarted = true;
+                }
+                //increment our frames
+                numberOfFrames++;
+
+
                 this.skeletonTrackingState = skeletonOfInterest.TrackingState;
 
                 if (this.skeletonTrackingState != SkeletonTrackingState.Tracked)
@@ -348,6 +376,81 @@ namespace FaceTrackingBasics
                         }
 
                         this.facePoints = frame.GetProjected3DShape();
+                        
+                    /*if ()
+                    {
+                        Debug.WriteLine("hit " + (frameIter * sampleRate) + " frames in " + (timer.Elapsed) + " seconds");
+                        frameIter++;
+                    }*/
+
+                        //Also grab our points
+                        EnumIndexableCollection<FeaturePoint, Vector3DF> facePoints3D = frame.Get3DShape();
+                        //pwd
+                        int index = 0;
+                        if (numberOfFrames > frameIter * sampleRate && frameIter < 5) //only grab 4 samples
+                        {
+                            //Create a new thread so we don't make the visual thread throw up all over the place
+                            new Thread(() =>
+                            {
+                                Thread.CurrentThread.IsBackground = true;
+                                /* run your code here */
+
+
+
+                           
+                            List<Tuple<float, float, float>> myPoints = new List<Tuple<float, float, float>>();
+                            foreach (Vector3DF vector in facePoints3D)
+                            {
+                                //csv.Append(string.Format("( ({1}, {2}, {3}){4}",vector.X, vector.Y, vector.Z, Environment.NewLine));
+                                myPoints.Add(new Tuple<float, float, float>(vector.X, vector.Y, vector.Z));
+                                index++;
+                            }
+
+                            ///Iterate through points, calculate difference
+                            for (int i = 0; i < 121; i++) 
+                            {
+                                for (int j = 1; j < 121; j++)//always running one ahead
+                                {
+                                    float diffX =  (myPoints[i].Item1 - myPoints[j].Item1);
+                                    float diffY = (myPoints[i].Item2 - myPoints[j].Item2);
+                                    float diffZ = (myPoints[i].Item3 - myPoints[j].Item3);
+                                    var csv = new StringBuilder();
+                                    if (frameIter == 0) //sample 1
+                                    {
+                                        csv.Clear();
+                                        //csv.Append(string.Format("{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
+                                        //File.WriteAllText(filePath, csv.ToString
+
+                                    }
+                                    else if (frameIter == 1)//sample 2
+                                    {
+                                        csv.Clear();
+                                        //csv.Append(string.Format(",,,{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
+                                        //File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
+      
+                                    }
+                                    else if (frameIter == 2)//sample 3
+                                    {
+                                        csv.Clear();
+                                        //csv.Append(string.Format(",,,,,,{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
+                                       // File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
+
+                                    }
+                                    else if (frameIter == 3) //sample 4
+                                    {
+
+                                        Debug.WriteLine("Sample 1");
+                                    }
+
+                                }
+                            }
+
+
+                            Debug.WriteLine("Written once");
+                            frameIter++;
+                            }).Start();
+                            //once = true;
+                        }
                     }
                 }
             }
