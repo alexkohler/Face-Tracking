@@ -10,7 +10,7 @@ namespace FaceTrackingBasics
     using System.IO; //for TextWriter
     using System.Text; //stringbuilder 
     using System.Collections; //for arrayList
-   
+    using System.Linq;//for enumerable
     using System.Threading;
     using System.Collections.Generic;
     using System.Diagnostics;
@@ -22,6 +22,10 @@ namespace FaceTrackingBasics
 
 
     using Point = System.Windows.Point;
+
+
+    //Weka dependencies
+    using weka;
 
     /// <summary>
     /// Class that uses the Face Tracking SDK to display a face mask for
@@ -59,6 +63,7 @@ namespace FaceTrackingBasics
         static Stopwatch timer = new Stopwatch();//for sake of knowing how quick samples are taken
         static Boolean timerStarted = false;
         const String filePath = "F:\\cygwin\\home\\aok5326\\workspace\\FacialRecognition\\data.csv";
+        const String testFilePath = "F:\\cygwin\\home\\aok5326\\workspace\\FacialRecognition\\data\\test.csv";
         static List<float> sampleOneDistances = new List<float>();
         static List<float> sampleTwoDistances = new List<float>();
         static List<float> sampleThreeDistances = new List<float>();
@@ -72,6 +77,8 @@ namespace FaceTrackingBasics
         static int[] sampleFourHistogram = new int[65];
         static float sampleFourMaxDistance = 0;
         static ArrayList pointList = new ArrayList();
+
+        public static TextBox ftStatusText;
 
 
         public FaceTrackingViewer()
@@ -396,9 +403,8 @@ namespace FaceTrackingBasics
 
                         //Also grab our points
                         EnumIndexableCollection<FeaturePoint, Vector3DF> facePoints3D = frame.Get3DShape();
-                        //pwd
                         int index = 0;
-                        if (numberOfFrames > frameIter * sampleRate && frameIter < 5) //only grab 4 samples
+                        if (numberOfFrames > frameIter * sampleRate && frameIter < 5) //only grab 4 samples over our given sample rate
                         {
                             //Create a new thread so we don't make the visual thread throw up all over the place
                             new Thread(() =>
@@ -418,8 +424,9 @@ namespace FaceTrackingBasics
                             //once = true;
                         }
 
-                        if (frameIter == 4)
+                        if (frameIter == 5)
                         {
+                            SetStatusText("Generating histograms...");
                             Console.WriteLine("We are ready to sample");
                             foreach (float distance in sampleOneDistances)
                             {
@@ -439,20 +446,34 @@ namespace FaceTrackingBasics
                             }                
 
 
-
+                            
                             Console.Write("Sample two size is " + sampleTwoDistances.Count);
                             Console.Write("Sample two max distance is " + sampleTwoMaxDistance);
                             int iter = 0;
 
-                            foreach (int count in sampleTwoHistogram)
+                            foreach (int count in sampleTwoHistogram)//can iterate through any histogram, they're all of size 65
                             {
-                                Console.WriteLine("S2Count at " + iter + " is " + count + "/" + sampleOneHistogram[iter] + "/" + sampleThreeHistogram[iter] + "/" + sampleFourHistogram);
+                                Console.WriteLine("Count for hist1/2/3/4[" + iter + "] is " + count + "/" + sampleOneHistogram[iter] + "/" + sampleThreeHistogram[iter] + "/" + sampleFourHistogram[iter]);
                                 iter++;
                             }
-    
+
+                            //Write our histograms to a csv file
+                            String[] sampleOneHistString = Array.ConvertAll(sampleOneHistogram, x => x.ToString());
+                            using (System.IO.StreamWriter file = new System.IO.StreamWriter(testFilePath))
+                                {
+                                      file.Write(string.Join(",", Enumerable.Range(1, 65).ToArray())                        + Environment.NewLine);
+                                      file.Write(string.Join(",", sampleOneHistString));
+                                      file.Write(Environment.NewLine);
+                                      file.Write(string.Join(",", Array.ConvertAll(sampleTwoHistogram, x => x.ToString())));
+                                      file.Write(Environment.NewLine);
+                                      file.Write(string.Join(",", Array.ConvertAll(sampleThreeHistogram, x => x.ToString())));
+                                      file.Write(Environment.NewLine);
+                                      file.Write(string.Join(",", Array.ConvertAll(sampleFourHistogram, x => x.ToString())));
+                            }
+                            
 
 
-                            frameIter++; //only do this once (will make conditional evaluate to false
+                            frameIter++; //only do this once (will make conditional evaluate to false. Is this clean and clear? Not really? Do I care? Not particularly. At least it's documented.
                         }
                     }
                 }
@@ -472,6 +493,7 @@ namespace FaceTrackingBasics
                                     var csv = new StringBuilder();
                                     if (frameIter == 1) //sample 1
                                     {
+                                        SetStatusText("Status: Generating first histogram...");
                                         sampleOneDistances.Add(distance);
                                         if (distance > sampleOneMaxDistance)
                                             sampleOneMaxDistance = distance;
@@ -480,6 +502,7 @@ namespace FaceTrackingBasics
                                     }
                                     else if (frameIter == 2)//sample 2
                                     {
+                                        SetStatusText("Status: Generating second histogram...");
                                         sampleTwoDistances.Add(distance);
                                         if (distance > sampleTwoMaxDistance)
                                             sampleTwoMaxDistance = distance;
@@ -489,6 +512,7 @@ namespace FaceTrackingBasics
                                     }
                                     else if (frameIter == 3)//sample 3
                                     {
+                                        SetStatusText("Status: Generating third histogram...");
                                         sampleThreeDistances.Add(distance);
                                         if (distance > sampleThreeMaxDistance)
                                             sampleThreeMaxDistance = distance;
@@ -498,6 +522,7 @@ namespace FaceTrackingBasics
                                     }
                                     else if (frameIter == 4) //sample 4
                                     {
+                                        SetStatusText("Status: Generating fourth histogram...");
                                         if (distance > sampleFourMaxDistance)
                                             sampleFourMaxDistance = distance;
                                         sampleFourDistances.Add(distance);
@@ -517,5 +542,21 @@ namespace FaceTrackingBasics
                 public Point P3;
             }
         }
+
+        delegate void SetTextCallback(string text);
+
+        public static void SetStatusText(string text)
+        {
+            // InvokeRequired required compares the thread ID of the
+            // calling thread to the thread ID of the creating thread.
+            // If these threads are different, it returns true.
+            ftStatusText.Dispatcher.BeginInvoke((Action)delegate()
+            {
+
+                ftStatusText.Text = text;
+            });
+        }
     }
+
+
 }

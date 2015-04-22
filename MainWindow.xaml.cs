@@ -28,12 +28,11 @@ namespace FaceTrackingBasics
         public MainWindow()
         {
             InitializeComponent();
-
+            FaceTrackingViewer.ftStatusText = statusText;
             var faceTrackingViewerBinding = new Binding("Kinect") { Source = sensorChooser };
             faceTrackingViewer.SetBinding(FaceTrackingViewer.KinectProperty, faceTrackingViewerBinding);
 
             sensorChooser.KinectChanged += SensorChooserOnKinectChanged;
-
             sensorChooser.Start();
         }
 

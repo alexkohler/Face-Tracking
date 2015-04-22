@@ -24,3 +24,4 @@ F:\cygwin\home\aok5326\workspace\FacialRecognition\obj\Win32\Debug\FaceTrackingB
 F:\cygwin\home\aok5326\workspace\FacialRecognition\bin\x86\Debug\CsvHelper.dll
 F:\cygwin\home\aok5326\workspace\FacialRecognition\bin\x86\Debug\CsvHelper.pdb
 F:\cygwin\home\aok5326\workspace\FacialRecognition\bin\x86\Debug\CsvHelper.xml
+F:\cygwin\home\aok5326\workspace\FacialRecognition\bin\x86\Debug\weka.dll
