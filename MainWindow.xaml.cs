@@ -29,6 +29,8 @@ namespace FaceTrackingBasics
         {
             InitializeComponent();
             FaceTrackingViewer.ftStatusText = statusText;
+            FaceTrackingViewer.ftPeopleTrackedText = peopleTrackedText;
+            FaceTrackingViewer.ftPredictionText = predictionText;
             var faceTrackingViewerBinding = new Binding("Kinect") { Source = sensorChooser };
             faceTrackingViewer.SetBinding(FaceTrackingViewer.KinectProperty, faceTrackingViewerBinding);
 
@@ -122,6 +124,16 @@ namespace FaceTrackingBasics
                     colorImageFrame.Width * Bgr32BytesPerPixel,
                     0);
             }
+        }
+
+        private void statusText_Copy_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+
+        }
+
+        private void statusText_Copy_TextChanged_1(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+
         }
     }
 }

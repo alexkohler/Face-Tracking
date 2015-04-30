@@ -34,9 +34,9 @@ namespace FaceTrackingBasics
     public partial class FaceTrackingViewer : UserControl, IDisposable
     {
         public static readonly DependencyProperty KinectProperty = DependencyProperty.Register(
-            "Kinect", 
-            typeof(KinectSensor), 
-            typeof(FaceTrackingViewer), 
+            "Kinect",
+            typeof(KinectSensor),
+            typeof(FaceTrackingViewer),
             new PropertyMetadata(
                 null, (o, args) => ((FaceTrackingViewer)o).OnSensorChanged((KinectSensor)args.OldValue, (KinectSensor)args.NewValue)));
 
@@ -62,23 +62,26 @@ namespace FaceTrackingBasics
         static int sampleRate = 30; //50 - roughly every 1.5 seconds
         static Stopwatch timer = new Stopwatch();//for sake of knowing how quick samples are taken
         static Boolean timerStarted = false;
-        const String filePath = "F:\\cygwin\\home\\aok5326\\workspace\\FacialRecognition\\data.csv";
-        const String testFilePath = "F:\\cygwin\\home\\aok5326\\workspace\\FacialRecognition\\data\\test.csv";
+        //const String filePath = "F:\\cygwin\\home\\aok5326\\workspace\\FacialRecognition\\data.csv";
+        const String testFilePath = "C:\\Users\\Datalab\\Documents\\GitHub\\Face-Tracking\\data\\currentTestInstance.dat";
         static List<float> sampleOneDistances = new List<float>();
         static List<float> sampleTwoDistances = new List<float>();
         static List<float> sampleThreeDistances = new List<float>();
         static List<float> sampleFourDistances = new List<float>();
-        static int[] sampleOneHistogram = new int[65];//64 bins
+        static double[] sampleOneHistogram = new double[65];//64 bins
         static float sampleOneMaxDistance = 0;
-        static int[] sampleTwoHistogram = new int[65];
+        static double[] sampleTwoHistogram = new double[65];
         static float sampleTwoMaxDistance = 0;
-        static int[] sampleThreeHistogram = new int[65];
+        static double[] sampleThreeHistogram = new double[65];
         static float sampleThreeMaxDistance = 0;
-        static int[] sampleFourHistogram = new int[65];
+        static double[] sampleFourHistogram = new double[65];
         static float sampleFourMaxDistance = 0;
         static ArrayList pointList = new ArrayList();
 
         public static TextBox ftStatusText;
+        public static TextBox ftPeopleTrackedText;
+        public static TextBox ftPredictionText;
+        public static int ftNumPeople = 0;
 
 
         public FaceTrackingViewer()
@@ -172,7 +175,7 @@ namespace FaceTrackingBasics
                 {
                     this.colorImage = new byte[colorImageFrame.PixelDataLength];
                 }
-                
+
                 // Get the skeleton information
                 if (this.skeletonData == null || this.skeletonData.Length != skeletonFrame.SkeletonArrayLength)
                 {
@@ -394,12 +397,12 @@ namespace FaceTrackingBasics
                         }
 
                         this.facePoints = frame.GetProjected3DShape();
-                        
-                    /*if ()
-                    {
-                        Debug.WriteLine("hit " + (frameIter * sampleRate) + " frames in " + (timer.Elapsed) + " seconds");
-                        frameIter++;
-                    }*/
+
+                        /*if ()
+                        {
+                            Debug.WriteLine("hit " + (frameIter * sampleRate) + " frames in " + (timer.Elapsed) + " seconds");
+                            frameIter++;
+                        }*/
 
                         //Also grab our points
                         EnumIndexableCollection<FeaturePoint, Vector3DF> facePoints3D = frame.Get3DShape();
@@ -409,17 +412,17 @@ namespace FaceTrackingBasics
                             //Create a new thread so we don't make the visual thread throw up all over the place
                             new Thread(() =>
                             {
-                            Thread.CurrentThread.IsBackground = true;
-   
-                            List<Tuple<float, float, float>> myPoints = new List<Tuple<float, float, float>>();
-                            foreach (Vector3DF vector in facePoints3D)
-                            {
-                                //csv.Append(string.Format("( ({1}, {2}, {3}){4}",vector.X, vector.Y, vector.Z, Environment.NewLine));
-                                myPoints.Add(new Tuple<float, float, float>(vector.X, vector.Y, vector.Z));
-                                index++;
-                            }
-                            calculateDistances(myPoints);
-                            frameIter++;
+                                Thread.CurrentThread.IsBackground = true;
+
+                                List<Tuple<float, float, float>> myPoints = new List<Tuple<float, float, float>>();
+                                foreach (Vector3DF vector in facePoints3D)
+                                {
+                                    //csv.Append(string.Format("( ({1}, {2}, {3}){4}",vector.X, vector.Y, vector.Z, Environment.NewLine));
+                                    myPoints.Add(new Tuple<float, float, float>(vector.X, vector.Y, vector.Z));
+                                    index++;
+                                }
+                                calculateDistances(myPoints);
+                                frameIter++;
                             }).Start();
                             //once = true;
                         }
@@ -430,7 +433,9 @@ namespace FaceTrackingBasics
                             Console.WriteLine("We are ready to sample");
                             foreach (float distance in sampleOneDistances)
                             {
-                                sampleOneHistogram[(int) Math.Floor(64 * distance / sampleOneMaxDistance)]++;
+
+                                int sampleOneIndex = (int)Math.Floor(64 * distance / sampleOneMaxDistance);
+                                sampleOneHistogram[sampleOneIndex]++;
                             }
                             foreach (float distance in sampleTwoDistances)
                             {
@@ -443,12 +448,26 @@ namespace FaceTrackingBasics
                             foreach (float distance in sampleFourDistances)
                             {
                                 sampleFourHistogram[(int)Math.Floor(64 * distance / sampleFourMaxDistance)]++;
-                            }                
+                            }
+
+                            //Go through histogram and divide by distances
 
 
-                            
-                            Console.Write("Sample two size is " + sampleTwoDistances.Count);
-                            Console.Write("Sample two max distance is " + sampleTwoMaxDistance);
+
+
+                            //Get 
+                            for (int i = 0; i < sampleOneHistogram.Length; i++)
+                                sampleOneHistogram[i] = sampleOneHistogram[i] / sampleOneDistances.Count;
+
+                            for (int i = 0; i < sampleTwoHistogram.Length; i++)
+                                sampleTwoHistogram[i] = sampleTwoHistogram[i] / sampleTwoDistances.Count;
+
+                            for (int i = 0; i < sampleThreeHistogram.Length; i++)
+                                sampleThreeHistogram[i] = sampleThreeHistogram[i] / sampleThreeDistances.Count;
+
+                            for (int i = 0; i < sampleFourHistogram.Length; i++)
+                                sampleFourHistogram[i] = sampleFourHistogram[i] / sampleFourDistances.Count;
+
                             int iter = 0;
 
                             foreach (int count in sampleTwoHistogram)//can iterate through any histogram, they're all of size 65
@@ -459,21 +478,44 @@ namespace FaceTrackingBasics
 
                             //Write our histograms to a csv file
                             String[] sampleOneHistString = Array.ConvertAll(sampleOneHistogram, x => x.ToString());
-                            using (System.IO.StreamWriter file = new System.IO.StreamWriter(testFilePath))
-                                {
-                                      file.Write(string.Join(",", Enumerable.Range(1, 65).ToArray())                        + Environment.NewLine);
-                                      file.Write(string.Join(",", sampleOneHistString));
-                                      file.Write(Environment.NewLine);
-                                      file.Write(string.Join(",", Array.ConvertAll(sampleTwoHistogram, x => x.ToString())));
-                                      file.Write(Environment.NewLine);
-                                      file.Write(string.Join(",", Array.ConvertAll(sampleThreeHistogram, x => x.ToString())));
-                                      file.Write(Environment.NewLine);
-                                      file.Write(string.Join(",", Array.ConvertAll(sampleFourHistogram, x => x.ToString())));
-                            }
+
                             
+                            using (System.IO.StreamWriter file = new System.IO.StreamWriter(testFilePath))
+                            {
+                                file.Write(string.Join(",", Enumerable.Range(1, 65).ToArray()) + Environment.NewLine);
+                                file.Write(string.Join(",", sampleOneHistString));
+                                file.Write(Environment.NewLine);
+                                file.Write(string.Join(",", Array.ConvertAll(sampleTwoHistogram, x => x.ToString())));
+                                file.Write(Environment.NewLine);
+                                file.Write(string.Join(",", Array.ConvertAll(sampleThreeHistogram, x => x.ToString())));
+                                file.Write(Environment.NewLine);
+                                file.Write(string.Join(",", Array.ConvertAll(sampleFourHistogram, x => x.ToString())));
+                            }
+                            //pass that data file to jar
+                            String jarPath = "C:\\Users\\Datalab\\Documents\\GitHub\\WekaClassifier\\jar\\wekaClassifier.jar";
+                            System.Diagnostics.Process clientProcess = new Process();
+                            String jarargs = "C:\\Users\\Datalab\\Documents\\GitHub\\WekaClassifier\\data\\training_data.arff  C:\\Users\\Datalab\\Documents\\GitHub\\WekaClassifier\\data\\testFormat.dat";
+                            clientProcess.StartInfo.FileName = "java";
+                            clientProcess.StartInfo.Arguments = "-jar " + jarPath + " " + jarargs;
+                            clientProcess.StartInfo.RedirectStandardOutput = true;
+                            clientProcess.StartInfo.UseShellExecute = false;
+                            clientProcess.Start();
+                           
+
+                            String output = clientProcess.StandardOutput.ReadToEnd();
+                            Console.WriteLine(output);
+                            clientProcess.WaitForExit();
+                            int code = clientProcess.ExitCode; 
+
+                            //write to dat file with 4 histograms averaged
 
 
                             frameIter++; //only do this once (will make conditional evaluate to false. Is this clean and clear? Not really? Do I care? Not particularly. At least it's documented.
+                            ftNumPeople++;
+                            SetPeopleText("People tracked : " + ftNumPeople);
+                            SetStatusText("Status: waiting....");
+                            SetPredictionText("Guess: " + output);
+                            
                         }
                     }
                 }
@@ -481,55 +523,55 @@ namespace FaceTrackingBasics
 
             void calculateDistances(List<Tuple<float, float, float>> myPoints)
             {
-                                            ///Iterate through points, calculate difference
-                            for (int i = 0; i < 121; i++) 
-                            {
-                                for (int j = 1; j < 121; j++)//always running one ahead
-                                {
-                                    float diffX =  (myPoints[i].Item1 - myPoints[j].Item1);
-                                    float diffY = (myPoints[i].Item2 - myPoints[j].Item2);
-                                    float diffZ = (myPoints[i].Item3 - myPoints[j].Item3);
-                                    float distance = (float)Math.Sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
-                                    var csv = new StringBuilder();
-                                    if (frameIter == 1) //sample 1
-                                    {
-                                        SetStatusText("Status: Generating first histogram...");
-                                        sampleOneDistances.Add(distance);
-                                        if (distance > sampleOneMaxDistance)
-                                            sampleOneMaxDistance = distance;
-                                        //csv.Append(string.Format("{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
-                                        //File.WriteAllText(filePath, csv.ToString
-                                    }
-                                    else if (frameIter == 2)//sample 2
-                                    {
-                                        SetStatusText("Status: Generating second histogram...");
-                                        sampleTwoDistances.Add(distance);
-                                        if (distance > sampleTwoMaxDistance)
-                                            sampleTwoMaxDistance = distance;
-                                        //csv.Append(string.Format(",,,{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
-                                        //File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
-      
-                                    }
-                                    else if (frameIter == 3)//sample 3
-                                    {
-                                        SetStatusText("Status: Generating third histogram...");
-                                        sampleThreeDistances.Add(distance);
-                                        if (distance > sampleThreeMaxDistance)
-                                            sampleThreeMaxDistance = distance;
-                                        //csv.Append(string.Format(",,,,,,{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
-                                       // File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
+                ///Iterate through points, calculate difference
+                for (int i = 0; i < 121; i++)
+                {
+                    for (int j = 1; j < 121; j++)//always running one ahead
+                    {
+                        float diffX = (myPoints[i].Item1 - myPoints[j].Item1);
+                        float diffY = (myPoints[i].Item2 - myPoints[j].Item2);
+                        float diffZ = (myPoints[i].Item3 - myPoints[j].Item3);
+                        float distance = (float)Math.Sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
+                        var csv = new StringBuilder();
+                        if (frameIter == 1) //sample 1
+                        {
+                            SetStatusText("Status: Generating first histogram...");
+                            sampleOneDistances.Add(distance);
+                            if (distance > sampleOneMaxDistance)
+                                sampleOneMaxDistance = distance;
+                            //csv.Append(string.Format("{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
+                            //File.WriteAllText(filePath, csv.ToString
+                        }
+                        else if (frameIter == 2)//sample 2
+                        {
+                            SetStatusText("Status: Generating second histogram...");
+                            sampleTwoDistances.Add(distance);
+                            if (distance > sampleTwoMaxDistance)
+                                sampleTwoMaxDistance = distance;
+                            //csv.Append(string.Format(",,,{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
+                            //File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
 
-                                    }
-                                    else if (frameIter == 4) //sample 4
-                                    {
-                                        SetStatusText("Status: Generating fourth histogram...");
-                                        if (distance > sampleFourMaxDistance)
-                                            sampleFourMaxDistance = distance;
-                                        sampleFourDistances.Add(distance);
-                                    }
+                        }
+                        else if (frameIter == 3)//sample 3
+                        {
+                            SetStatusText("Status: Generating third histogram...");
+                            sampleThreeDistances.Add(distance);
+                            if (distance > sampleThreeMaxDistance)
+                                sampleThreeMaxDistance = distance;
+                            //csv.Append(string.Format(",,,,,,{0},{1},{2}, {3}", diffX, diffY, diffZ, Environment.NewLine));//may not want to hardcode that newline
+                            // File.AppendAllText(filePath, csv.ToString(), Encoding.ASCII);//append is true
 
-                                }
-                            }
+                        }
+                        else if (frameIter == 4) //sample 4
+                        {
+                            SetStatusText("Status: Generating fourth histogram...");
+                            if (distance > sampleFourMaxDistance)
+                                sampleFourMaxDistance = distance;
+                            sampleFourDistances.Add(distance);
+                        }
+
+                    }
+                }
 
             }
 
@@ -554,6 +596,30 @@ namespace FaceTrackingBasics
             {
 
                 ftStatusText.Text = text;
+            });
+        }
+
+        public static void SetPeopleText(string text)
+        {
+            // InvokeRequired required compares the thread ID of the
+            // calling thread to the thread ID of the creating thread.
+            // If these threads are different, it returns true.
+            ftPeopleTrackedText.Dispatcher.BeginInvoke((Action)delegate()
+            {
+
+                ftPeopleTrackedText.Text = text;
+            });
+        }
+
+        public static void SetPredictionText(string text)
+        {
+            // InvokeRequired required compares the thread ID of the
+            // calling thread to the thread ID of the creating thread.
+            // If these threads are different, it returns true.
+            ftPeopleTrackedText.Dispatcher.BeginInvoke((Action)delegate()
+            {
+
+                ftPredictionText.Text = text;
             });
         }
     }

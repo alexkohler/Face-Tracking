@@ -26,8 +26,19 @@
             <Grid Name="MainGrid" Width="640" Height="480">
                 <Image Name="ColorImage"/>
                 <local:FaceTrackingViewer x:Name="faceTrackingViewer" />
+                <TextBox 
+                	x:Name="predictionText"
+                	HorizontalAlignment="Left"
+                	Height="25"
+                	FontSize="20"
+                	Margin="0,-42,0,0"
+                	BorderThickness="0"
+                	TextWrapping="Wrap"
+                	Text="Prediction: "
+                	VerticalAlignment="Top"
+                	Width="350"/>
             </Grid>
-            
+
         </Viewbox>
         <Grid>
             <TextBox 
@@ -38,9 +49,20 @@
 		 Margin="10,10,0,0"
          BorderThickness="0"
 		 TextWrapping="Wrap"
-		 Text="Status: "
+		 Text="Status: waiting..."
 		 VerticalAlignment="Top"
 		 Width="350"/>
+            <TextBox 
+            	x:Name="peopleTrackedText"
+            	HorizontalAlignment="Left"
+            	Height="25"
+            	FontSize="20"
+            	Margin="466,10,0,0"
+            	BorderThickness="0"
+            	TextWrapping="Wrap"
+            	Text="People tracked: 0"
+            	VerticalAlignment="Top"
+            	Width="256" TextChanged="statusText_Copy_TextChanged"/>
 
         </Grid>
     </Grid>

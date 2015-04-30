@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-F:\cygwin\home\aok5326\workspace\FacialRecognition\obj\Win32\Debug\
+C:\Users\Datalab\Documents\GitHub\Face-Tracking\obj\Win32\Debug\
 FaceTrackingBasics
 none
 false
 DEBUG;TRACE
-F:\cygwin\home\aok5326\workspace\FacialRecognition\App.xaml
+C:\Users\Datalab\Documents\GitHub\Face-Tracking\App.xaml
 2-221725455
 
-7-716832301
-19-1077888312
+11-978430106
+19-793458833
 FaceTrackingViewer.xaml;MainWindow.xaml;
 
-True
+False
 
