@@ -1,2 +1,2 @@
 # Face-Tracking
-Repository for facial tracking, using 4 samples with distances between every point with each respective sample. This data is then put into a histogram, plans are to use Wekka as a means of identification with these histograms.
+Machine Learning research project under Dr. Conrad Tucker's DATA Lab. Repository for facial tracking portion of research. For more information, check out my latest presentation [here] (https://docs.google.com/presentation/d/1k_50ILMCW_kV-05CYOygwoTEByKU92DsDcTn0_Mh9ys/pub?start=true&loop=false&delayms=3000&slide=id.gaf29f1a96_0_34).
